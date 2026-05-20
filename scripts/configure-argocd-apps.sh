@@ -31,24 +31,19 @@ check_argocd_ready() {
   echo ""
 }
 
-cleanup_old_apps() {
-  local old_apps=("operator-service-mesh-3" "operator-devspaces" "operator-amq-streams")
-  for app in "${old_apps[@]}"; do
-    if oc get application "${app}" -n "${NAMESPACE}" &>/dev/null; then
-      echo "Removing legacy Application: ${app}"
-      oc delete application "${app}" -n "${NAMESPACE}" --wait=false
-    fi
-  done
+label_target_namespace() {
+  echo "Labeling openshift-operators for ArgoCD management..."
+  oc label namespace openshift-operators argocd.argoproj.io/managed-by="${NAMESPACE}" --overwrite
+  echo ""
 }
 
 check_argocd_ready
-
-cleanup_old_apps
+label_target_namespace
 
 echo "-------------------------------------------"
 echo "Creating Application: cluster-operators"
 echo "  Path:             gitops/operators"
-echo "  Dest Namespace:   ${NAMESPACE}"
+echo "  Dest Namespace:   openshift-operators"
 
 oc apply -f - <<EOF
 apiVersion: argoproj.io/v1alpha1
@@ -64,13 +59,12 @@ spec:
     path: gitops/operators
   destination:
     server: https://kubernetes.default.svc
-    namespace: ${NAMESPACE}
+    namespace: openshift-operators
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
       - ServerSideApply=true
 EOF
 
@@ -81,7 +75,6 @@ echo "============================================"
 echo "  ArgoCD Application configured."
 echo ""
 echo "  The 'cluster-operators' application manages:"
-echo "    - OperatorGroup (AllNamespaces mode)"
 echo "    - Service Mesh 3 subscription"
 echo "    - Dev Spaces subscription"
 echo "    - AMQ Streams subscription"

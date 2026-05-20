@@ -12,7 +12,6 @@ gitops/
 │   └── kustomization.yaml
 ├── operators/
 │   ├── kustomization.yaml       # Root kustomization for all operators
-│   ├── operator-group.yaml      # OperatorGroup (AllNamespaces mode)
 │   ├── service-mesh-3/
 │   │   ├── subscription.yaml    # Service Mesh 3 operator subscription
 │   │   └── kustomization.yaml
@@ -24,27 +23,19 @@ gitops/
 │       └── kustomization.yaml
 scripts/
 ├── get-argocd-credentials.sh    # Retrieve ArgoCD URL and admin password
-└── configure-argocd-apps.sh     # Create ArgoCD Applications for all operators
+└── configure-argocd-apps.sh     # Create ArgoCD Application + label namespace
 ```
 
 ## Operators Managed
 
-| Operator | Package Name | Channel | Install Namespace |
-|---|---|---|---|
-| Red Hat OpenShift Service Mesh 3 | `servicemeshoperator3` | `stable` | `agentic` |
-| Red Hat OpenShift Dev Spaces | `devspaces` | `stable` | `agentic` |
-| Red Hat Streams for Apache Kafka (AMQ Streams) | `amq-streams` | `stable` | `agentic` |
+| Operator | Package Name | Channel | Approval | Namespace |
+|---|---|---|---|---|
+| Red Hat OpenShift Service Mesh 3 | `servicemeshoperator3` | `stable` | Manual | `openshift-operators` |
+| Red Hat OpenShift Dev Spaces | `devspaces` | `stable` | Automatic | `openshift-operators` |
+| Red Hat Streams for Apache Kafka (AMQ Streams) | `amq-streams` | `stable` | Manual | `openshift-operators` |
 
-All operators are installed from the `redhat-operators` catalog with **Automatic** install plan approval.
-
-An `OperatorGroup` in AllNamespaces mode is deployed so the operators watch all namespaces
-on the cluster, even though the Subscriptions themselves live in the `agentic` namespace.
-
-> **Why `agentic` instead of `openshift-operators`?**
-> A project-scoped ArgoCD instance can only manage resources within its own namespace.
-> Targeting `openshift-operators` would cause `"namespace is not managed"` errors.
-> The OperatorGroup with empty `spec` (AllNamespaces mode) ensures the operators still
-> function cluster-wide.
+All operators are installed from the `redhat-operators` catalog in the `openshift-operators`
+namespace, using the existing `global-operators` OperatorGroup.
 
 ---
 
@@ -114,37 +105,32 @@ oc get secret argocd-cluster -n agentic -o jsonpath='{.data.admin\.password}' | 
 
 > **Important**: The gitops manifests must be committed and pushed to the remote repository
 > before running this step. ArgoCD fetches from the remote git URL, not the local filesystem.
-> If the paths don't exist on the remote branch, applications will show `Unknown` sync status
-> with a `"app path does not exist"` error.
 
 ### Automated (Recommended)
 
-Run the configuration script to create ArgoCD Applications for all three operators:
+Run the configuration script:
 
 ```bash
 ./scripts/configure-argocd-apps.sh
 ```
 
-The script creates a single ArgoCD Application called `cluster-operators` that points to
-the root `gitops/operators` path. Through Kustomize, this deploys:
-- The **OperatorGroup** in AllNamespaces mode
-- **Service Mesh 3** operator subscription
-- **Dev Spaces** operator subscription
-- **AMQ Streams** operator subscription
+The script performs two actions:
 
-The Application is configured with:
+1. **Labels** the `openshift-operators` namespace with `argocd.argoproj.io/managed-by=agentic`
+   so the project-scoped ArgoCD instance can manage resources there.
+
+2. **Creates** a single ArgoCD Application called `cluster-operators` that points to
+   `gitops/operators`. Through Kustomize, this manages:
+   - Service Mesh 3 operator subscription
+   - Dev Spaces operator subscription
+   - AMQ Streams operator subscription
+
+The Application uses:
 - **Automated sync** with pruning and self-healing
 - **Server-side apply** for CRD-heavy operator resources
-- **CreateNamespace** sync option enabled
-- **Destination namespace**: `agentic` (matching the ArgoCD managed namespace)
-
-> Using a single Application ensures the OperatorGroup is always deployed alongside
-> the Subscriptions. Without the OperatorGroup, OLM cannot generate InstallPlans
-> and the operators will not install.
+- **Destination namespace**: `openshift-operators`
 
 #### Environment Variables
-
-The script supports these overrides:
 
 | Variable | Default | Description |
 |---|---|---|
@@ -152,17 +138,13 @@ The script supports these overrides:
 | `GIT_REPO_URL` | `https://github.com/maarten-vandeperre/shift-right-agentic-development.git` | Git repository URL |
 | `GIT_REVISION` | `main` | Git branch/tag/commit to track |
 
-Example with overrides:
-
-```bash
-GIT_REVISION=develop ./scripts/configure-argocd-apps.sh
-```
-
 ### Manual Application Creation
 
-To create the operators application manually:
-
 ```bash
+# Label openshift-operators so the namespaced ArgoCD can manage it
+oc label namespace openshift-operators argocd.argoproj.io/managed-by=agentic --overwrite
+
+# Create the Application
 oc apply -f - <<EOF
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -177,13 +159,12 @@ spec:
     path: gitops/operators
   destination:
     server: https://kubernetes.default.svc
-    namespace: agentic
+    namespace: openshift-operators
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
-      - CreateNamespace=true
       - ServerSideApply=true
 EOF
 ```
@@ -203,40 +184,45 @@ All applications should show `Synced` and `Healthy` status.
 ### Check Operator Subscriptions
 
 ```bash
-oc get subscriptions -n agentic
+oc get subscriptions -n openshift-operators
 ```
 
 ### Check Operator CSVs
 
 ```bash
-oc get csv -n agentic
+oc get csv -n openshift-operators
 ```
 
 All operators should show `Succeeded` install phase.
 
-### Check the OperatorGroup
-
-```bash
-oc get operatorgroup -n agentic
-```
-
-You should see `agentic-operator-group` with no target namespaces (AllNamespaces mode).
-
 ---
 
-## Architecture: Namespaced ArgoCD
+## Architecture Notes
 
-The ArgoCD instance deployed here is **project-scoped** (namespaced mode). This has
-implications for what it can manage:
+### Namespaced ArgoCD Managing openshift-operators
 
-| Resource Type | Can Manage? | Notes |
-|---|---|---|
-| Namespaced resources in `agentic` | Yes | Subscriptions, OperatorGroups, etc. |
-| Namespaced resources in other namespaces | No | Would require `argocd.argoproj.io/managed-by` label on target namespace |
-| Cluster-scoped resources (Namespace, CRDs) | No | Requires cluster-scoped ArgoCD in `openshift-gitops` |
+The ArgoCD instance in `agentic` is project-scoped (namespaced mode). By default it can
+only manage resources in its own namespace. To manage operator Subscriptions in
+`openshift-operators`, the namespace must be labeled:
 
-This is why all operator Subscriptions target the `agentic` namespace with an OperatorGroup
-in AllNamespaces mode, rather than the traditional `openshift-operators` namespace.
+```bash
+oc label namespace openshift-operators argocd.argoproj.io/managed-by=agentic
+```
+
+The OpenShift GitOps operator automatically creates the necessary RBAC when this label
+is applied, allowing the ArgoCD application controller to manage resources in that namespace.
+
+### Matching Existing Installations
+
+The gitops manifests are configured to match the operator Subscriptions already installed
+on the cluster. Key fields that must match include:
+- `installPlanApproval` (Manual vs Automatic)
+- `startingCSV` (for Manual approval operators)
+- `channel`
+- `config` (resource requests, annotations)
+
+If the manifests don't match, ArgoCD will show `OutOfSync` and attempt to reconcile,
+potentially disrupting running operators.
 
 ---
 
@@ -244,52 +230,32 @@ in AllNamespaces mode, rather than the traditional `openshift-operators` namespa
 
 ### ArgoCD Application Stuck in "Unknown" Sync Status
 
-This typically means ArgoCD cannot load the manifests from the git repository.
-
 1. **"app path does not exist"**: The gitops folder has not been pushed to the remote branch.
-   Commit and push your changes, then force a refresh:
+   Commit and push, then force a refresh:
    ```bash
    git add gitops/ && git commit -m "update gitops" && git push origin main
-   oc annotate application <app-name> -n agentic argocd.argoproj.io/refresh=normal --overwrite
+   oc annotate application cluster-operators -n agentic argocd.argoproj.io/refresh=hard --overwrite
    ```
 
-2. **"namespace is not managed"**: The Application's destination namespace is outside ArgoCD's
-   managed scope. Change the destination to `agentic`.
+2. **"namespace is not managed"**: The `openshift-operators` namespace is not labeled.
+   ```bash
+   oc label namespace openshift-operators argocd.argoproj.io/managed-by=agentic
+   ```
 
 3. **"can not be managed when in namespaced mode"**: The manifests contain cluster-scoped
-   resources (e.g. `Namespace`). Remove them; operators create their own namespaces.
+   resources (e.g. `Namespace`). Namespaced ArgoCD cannot manage those.
 
-4. **General diagnosis**:
-   ```bash
-   oc describe application <app-name> -n agentic
-   oc logs -l app.kubernetes.io/name=argocd-repo-server -n agentic --tail=50
-   ```
+### Application Shows OutOfSync
 
-### Operator Not Installing
-
-1. Check the Subscription status:
-   ```bash
-   oc describe subscription <operator-name> -n agentic
-   ```
-
-2. Verify the install plan:
-   ```bash
-   oc get installplan -n agentic
-   ```
-
-3. Confirm the OperatorGroup exists:
-   ```bash
-   oc get operatorgroup -n agentic
-   ```
-   If missing, ArgoCD should create it from `gitops/operators/operator-group.yaml`.
+The gitops manifests don't match the live cluster state. Compare:
+```bash
+oc get sub <operator-name> -n openshift-operators -o yaml
+```
+with the corresponding `subscription.yaml` in `gitops/operators/`. Ensure `installPlanApproval`,
+`startingCSV`, `channel`, and `config` all match.
 
 ### Validating Manifests Locally
 
-Before pushing, validate kustomize output:
-
 ```bash
-oc kustomize gitops/operators/service-mesh-3/
-oc kustomize gitops/operators/devspaces/
-oc kustomize gitops/operators/amq-streams/
 oc kustomize gitops/operators/
 ```
