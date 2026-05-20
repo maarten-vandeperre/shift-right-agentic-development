@@ -29,8 +29,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/pgsql/data
-            - name: init-scripts
-              mountPath: /opt/app-root/src/postgresql-init
           resources:
             requests:
               cpu: 100m
@@ -55,6 +53,3 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: postgresql-data
-        - name: init-scripts
-          configMap:
-            name: postgresql-init
