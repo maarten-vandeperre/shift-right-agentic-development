@@ -1,0 +1,6 @@
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: agentic-operator-group
+  namespace: agentic
+spec: {}

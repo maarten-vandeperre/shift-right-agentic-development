@@ -101,15 +101,15 @@ check_argocd_ready
 
 create_app "operator-service-mesh-3" \
   "gitops/operators/service-mesh-3" \
-  "openshift-operators"
+  "${NAMESPACE}"
 
 create_app "operator-devspaces" \
   "gitops/operators/devspaces" \
-  "openshift-operators"
+  "${NAMESPACE}"
 
 create_app "operator-amq-streams" \
   "gitops/operators/amq-streams" \
-  "openshift-operators"
+  "${NAMESPACE}"
 
 echo "============================================"
 echo "  All ArgoCD Applications configured."
