@@ -18,7 +18,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: init
-          image: registry.access.redhat.com/rhscl/mongodb-36-rhel7:latest
+          image: docker.io/mongo:4.4
           envFrom:
             - secretRef:
                 name: mongodb-credentials
@@ -28,7 +28,7 @@ spec:
             - |
               echo "Waiting for MongoDB to be ready..."
               for i in $(seq 1 30); do
-                if mongo mongodb:27017/admin --eval "quit()" 2>/dev/null; then
+                if mongo mongodb:27017/admin -u admin -p "${MONGODB_ADMIN_PASSWORD}" --eval "quit()" 2>/dev/null; then
                   echo "MongoDB is ready."
                   break
                 fi
@@ -36,8 +36,15 @@ spec:
                 sleep 5
               done
 
-              echo "Seeding data..."
-              mongo mongodb:27017/${MONGODB_DATABASE} -u ${MONGODB_USER} -p ${MONGODB_PASSWORD} <<'EOJS'
+              echo "Creating application user and seeding data..."
+              mongo mongodb:27017/admin -u admin -p "${MONGODB_ADMIN_PASSWORD}" <<EOJS
+              use ${MONGODB_DATABASE};
+
+              db.createUser({
+                user: "${MONGODB_USER}",
+                pwd: "${MONGODB_PASSWORD}",
+                roles: [{ role: "readWrite", db: "${MONGODB_DATABASE}" }]
+              });
 
               var existing = db.people.count();
               if (existing > 0) {
@@ -100,7 +107,6 @@ spec:
               db.people.createIndex({ email: 1 }, { unique: true });
 
               print("Seed complete. Document count: " + db.people.count());
-
               EOJS
 
               echo "MongoDB initialization complete."

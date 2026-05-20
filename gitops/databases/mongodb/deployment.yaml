@@ -19,16 +19,26 @@ spec:
     spec:
       containers:
         - name: mongodb
-          image: registry.access.redhat.com/rhscl/mongodb-36-rhel7:latest
+          image: docker.io/mongo:4.4
           ports:
             - containerPort: 27017
               protocol: TCP
-          envFrom:
-            - secretRef:
-                name: mongodb-credentials
+          env:
+            - name: MONGO_INITDB_ROOT_USERNAME
+              value: admin
+            - name: MONGO_INITDB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-credentials
+                  key: MONGODB_ADMIN_PASSWORD
+            - name: MONGO_INITDB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-credentials
+                  key: MONGODB_DATABASE
           volumeMounts:
             - name: data
-              mountPath: /var/lib/mongodb/data
+              mountPath: /data/db
           resources:
             requests:
               cpu: 100m
@@ -39,17 +49,17 @@ spec:
           readinessProbe:
             exec:
               command:
-                - /bin/sh
-                - -c
-                - "mongo 127.0.0.1:27017/$MONGODB_DATABASE -u $MONGODB_USER -p $MONGODB_PASSWORD --eval 'quit()'"
+                - mongo
+                - --eval
+                - "db.adminCommand('ping')"
             initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
             exec:
               command:
-                - /bin/sh
-                - -c
-                - "mongo 127.0.0.1:27017/$MONGODB_DATABASE -u $MONGODB_USER -p $MONGODB_PASSWORD --eval 'quit()'"
+                - mongo
+                - --eval
+                - "db.adminCommand('ping')"
             initialDelaySeconds: 30
             periodSeconds: 15
       volumes:
