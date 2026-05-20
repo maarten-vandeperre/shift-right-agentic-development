@@ -23,11 +23,11 @@ spec:
               protocol: TCP
           env:
             - name: VITE_PERSON_API
-              value: PLACEHOLDER_PERSON_API
+              value: https://person-service-agentic.apps.ocp.h7xz9.sandbox1562.opentlc.com/api/persons
             - name: VITE_ADDRESS_API
-              value: PLACEHOLDER_ADDRESS_API
+              value: https://address-service-agentic.apps.ocp.h7xz9.sandbox1562.opentlc.com/api/addresses
             - name: VITE_PEOPLE_API
-              value: PLACEHOLDER_PEOPLE_API
+              value: https://people-service-agentic.apps.ocp.h7xz9.sandbox1562.opentlc.com/api/people
           resources:
             requests:
               cpu: 50m
