@@ -13,17 +13,33 @@ gitops/
 ├── operators/
 │   ├── kustomization.yaml       # Root kustomization for all operators
 │   ├── service-mesh-3/
-│   │   ├── subscription.yaml    # Service Mesh 3 operator subscription
+│   │   ├── subscription.yaml
 │   │   └── kustomization.yaml
 │   ├── devspaces/
-│   │   ├── subscription.yaml    # Dev Spaces operator subscription
+│   │   ├── subscription.yaml
 │   │   └── kustomization.yaml
 │   └── amq-streams/
-│       ├── subscription.yaml    # AMQ Streams operator subscription
+│       ├── subscription.yaml
+│       └── kustomization.yaml
+├── databases/
+│   ├── kustomization.yaml       # Root kustomization for all databases
+│   ├── postgresql/
+│   │   ├── secret.yaml          # PostgreSQL credentials
+│   │   ├── pvc.yaml             # Persistent storage
+│   │   ├── init-configmap.yaml  # Schema + seed data SQL
+│   │   ├── deployment.yaml
+│   │   ├── service.yaml
+│   │   └── kustomization.yaml
+│   └── mongodb/
+│       ├── secret.yaml          # MongoDB credentials
+│       ├── pvc.yaml             # Persistent storage
+│       ├── init-configmap.yaml  # Seed data JS
+│       ├── deployment.yaml
+│       ├── service.yaml
 │       └── kustomization.yaml
 scripts/
 ├── get-argocd-credentials.sh    # Retrieve ArgoCD URL and admin password
-└── configure-argocd-apps.sh     # Create ArgoCD Application + label namespace
+└── configure-argocd-apps.sh     # Create ArgoCD Applications + label namespaces
 ```
 
 ## Operators Managed
@@ -114,21 +130,23 @@ Run the configuration script:
 ./scripts/configure-argocd-apps.sh
 ```
 
-The script performs two actions:
+The script performs three actions:
 
 1. **Labels** the `openshift-operators` namespace with `argocd.argoproj.io/managed-by=agentic`
    so the project-scoped ArgoCD instance can manage resources there.
 
-2. **Creates** a single ArgoCD Application called `cluster-operators` that points to
-   `gitops/operators`. Through Kustomize, this manages:
+2. **Creates** the `cluster-operators` ArgoCD Application (`gitops/operators`), managing:
    - Service Mesh 3 operator subscription
    - Dev Spaces operator subscription
    - AMQ Streams operator subscription
 
-The Application uses:
+3. **Creates** the `databases` ArgoCD Application (`gitops/databases`), managing:
+   - PostgreSQL deployment with schema and seed data
+   - MongoDB deployment with aggregated seed documents
+
+Both Applications use:
 - **Automated sync** with pruning and self-healing
-- **Server-side apply** for CRD-heavy operator resources
-- **Destination namespace**: `openshift-operators`
+- **Server-side apply** for reliable resource management
 
 #### Environment Variables
 
@@ -197,6 +215,88 @@ All operators should show `Succeeded` install phase.
 
 ---
 
+## Databases
+
+### PostgreSQL
+
+Deployed in the `agentic` namespace using the OpenShift imagestream `postgresql:15-el9`.
+
+**Schema:**
+
+```
+address
+├── ref         UUID PRIMARY KEY
+├── line_1      VARCHAR(255) NOT NULL
+├── line_2      VARCHAR(255)
+└── country     VARCHAR(100) NOT NULL
+
+person
+├── ref          UUID PRIMARY KEY
+├── first_name   VARCHAR(100) NOT NULL
+├── last_name    VARCHAR(100) NOT NULL
+├── email        VARCHAR(255) NOT NULL UNIQUE
+└── address_ref  UUID → address(ref)
+```
+
+**Connection details (in-cluster):**
+
+| Field    | Value |
+|----------|-------|
+| Host     | `postgresql.agentic.svc.cluster.local` |
+| Port     | `5432` |
+| Database | `agentic` |
+| User     | `agentic` |
+| Password | from secret `postgresql-credentials` |
+
+**Seed data:** 4 people, 3 addresses. Two people share the same address (Belgium).
+
+### MongoDB
+
+Deployed in the `agentic` namespace using `bitnami/mongodb:7.0`.
+
+**Collection:** `people` in database `agentic`
+
+Each document is the aggregated view of a person with their address embedded:
+
+```json
+{
+  "ref": "a1b2c3d4-...",
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com",
+  "address": {
+    "ref": "d4e5f6a7-...",
+    "line1": "123 Main Street",
+    "line2": "Apt 4B",
+    "country": "Belgium"
+  }
+}
+```
+
+**Connection details (in-cluster):**
+
+| Field    | Value |
+|----------|-------|
+| Host     | `mongodb.agentic.svc.cluster.local` |
+| Port     | `27017` |
+| Database | `agentic` |
+| User     | `agentic` |
+| Password | from secret `mongodb-credentials` |
+
+**Seed data:** 4 documents matching the PostgreSQL person+address join.
+
+### Verifying Database Content
+
+```bash
+# PostgreSQL - check tables and data
+oc exec deploy/postgresql -n agentic -- psql -U agentic -d agentic -c "SELECT p.first_name, p.last_name, p.email, a.line_1, a.country FROM person p JOIN address a ON p.address_ref = a.ref;"
+
+# MongoDB - check collection
+oc exec deploy/mongodb -n agentic -- mongosh agentic --username agentic --password agentic-mongo-pass --eval "db.people.find().pretty()"
+```
+
+---
+
 ## Architecture Notes
 
 ### Namespaced ArgoCD Managing openshift-operators
@@ -258,4 +358,5 @@ with the corresponding `subscription.yaml` in `gitops/operators/`. Ensure `insta
 
 ```bash
 oc kustomize gitops/operators/
+oc kustomize gitops/databases/
 ```

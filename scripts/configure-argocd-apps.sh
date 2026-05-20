@@ -37,29 +37,31 @@ label_target_namespace() {
   echo ""
 }
 
-check_argocd_ready
-label_target_namespace
+create_app() {
+  local app_name="$1"
+  local app_path="$2"
+  local dest_namespace="$3"
 
-echo "-------------------------------------------"
-echo "Creating Application: cluster-operators"
-echo "  Path:             gitops/operators"
-echo "  Dest Namespace:   openshift-operators"
+  echo "-------------------------------------------"
+  echo "Creating Application: ${app_name}"
+  echo "  Path:             ${app_path}"
+  echo "  Dest Namespace:   ${dest_namespace}"
 
-oc apply -f - <<EOF
+  oc apply -f - <<EOF
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: cluster-operators
+  name: ${app_name}
   namespace: ${NAMESPACE}
 spec:
   project: default
   source:
     repoURL: ${REPO_URL}
     targetRevision: ${TARGET_REVISION}
-    path: gitops/operators
+    path: ${app_path}
   destination:
     server: https://kubernetes.default.svc
-    namespace: openshift-operators
+    namespace: ${dest_namespace}
   syncPolicy:
     automated:
       prune: true
@@ -68,16 +70,27 @@ spec:
       - ServerSideApply=true
 EOF
 
-echo "  Done."
-echo ""
+  echo "  Done."
+  echo ""
+}
+
+check_argocd_ready
+label_target_namespace
+
+create_app "cluster-operators" "gitops/operators" "openshift-operators"
+create_app "databases" "gitops/databases" "${NAMESPACE}"
 
 echo "============================================"
-echo "  ArgoCD Application configured."
+echo "  ArgoCD Applications configured."
 echo ""
-echo "  The 'cluster-operators' application manages:"
+echo "  'cluster-operators' manages:"
 echo "    - Service Mesh 3 subscription"
 echo "    - Dev Spaces subscription"
 echo "    - AMQ Streams subscription"
+echo ""
+echo "  'databases' manages:"
+echo "    - PostgreSQL (schema: person + address tables)"
+echo "    - MongoDB (collection: people - aggregated documents)"
 echo ""
 echo "  View in the ArgoCD UI:"
 ROUTE=$(oc get route argocd-server -n "${NAMESPACE}" -o jsonpath='{.spec.host}' 2>/dev/null || echo "<argocd-route-not-found>")
