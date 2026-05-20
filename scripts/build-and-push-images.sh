@@ -5,7 +5,8 @@ REGISTRY="${CONTAINER_REGISTRY:-ghcr.io}"
 REPO_OWNER="${GITHUB_OWNER:-maarten-vandeperre}"
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 APPS_DIR="$(cd "$(dirname "$0")/../apps" && pwd)"
-BUILDER="${CONTAINER_BUILDER:-docker}"
+BUILDER="${CONTAINER_BUILDER:-podman}"
+PLATFORM="${BUILD_PLATFORM:-linux/amd64}"
 
 SERVICES=("person-service" "address-service" "people-service" "frontend")
 
@@ -14,12 +15,14 @@ echo "  Build & Push Container Images"
 echo "  Registry: ${REGISTRY}/${REPO_OWNER}"
 echo "  Tag:      ${IMAGE_TAG}"
 echo "  Builder:  ${BUILDER}"
+echo "  Platform: ${PLATFORM}"
+echo "  Context:  ${APPS_DIR}"
 echo "============================================"
 echo ""
 
-if ! ${BUILDER} info &>/dev/null; then
-  echo "ERROR: '${BUILDER}' is not running or not installed."
-  echo "       Install Docker/Podman or set CONTAINER_BUILDER=podman"
+if ! ${BUILDER} version &>/dev/null; then
+  echo "ERROR: '${BUILDER}' is not available."
+  echo "       Install Docker/Podman or set CONTAINER_BUILDER=docker"
   exit 1
 fi
 
@@ -32,6 +35,11 @@ else
 fi
 echo ""
 
+echo "Pre-building frontend..."
+(cd "${APPS_DIR}/frontend" && npm ci --silent && npm run build)
+echo "Frontend build complete."
+echo ""
+
 for SERVICE in "${SERVICES[@]}"; do
   IMAGE="${REGISTRY}/${REPO_OWNER}/shift-right-${SERVICE}:${IMAGE_TAG}"
   echo "-------------------------------------------"
@@ -40,9 +48,10 @@ for SERVICE in "${SERVICES[@]}"; do
   echo ""
 
   ${BUILDER} build \
+    --platform "${PLATFORM}" \
     -t "${IMAGE}" \
     -f "${APPS_DIR}/${SERVICE}/Dockerfile" \
-    "${APPS_DIR}/${SERVICE}"
+    "${APPS_DIR}"
 
   echo ""
   echo "Pushing: ${IMAGE}"
