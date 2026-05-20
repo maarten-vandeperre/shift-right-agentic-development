@@ -10,8 +10,6 @@ data:
     #!/bin/bash
     psql -d "${POSTGRESQL_DATABASE}" <<'EOSQL'
 
-    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
     CREATE TABLE IF NOT EXISTS address (
         ref UUID PRIMARY KEY,
         line_1 VARCHAR(255) NOT NULL,

@@ -252,7 +252,8 @@ person
 
 ### MongoDB
 
-Deployed in the `agentic` namespace using `bitnami/mongodb:7.0`.
+Deployed in the `agentic` namespace using the Red Hat `rhscl/mongodb-36-rhel7` image
+(OpenShift-compatible, runs as non-root).
 
 **Collection:** `people` in database `agentic`
 
@@ -292,7 +293,7 @@ Each document is the aggregated view of a person with their address embedded:
 oc exec deploy/postgresql -n agentic -- psql -U agentic -d agentic -c "SELECT p.first_name, p.last_name, p.email, a.line_1, a.country FROM person p JOIN address a ON p.address_ref = a.ref;"
 
 # MongoDB - check collection
-oc exec deploy/mongodb -n agentic -- mongosh agentic --username agentic --password agentic-mongo-pass --eval "db.people.find().pretty()"
+oc exec deploy/mongodb -n agentic -- mongo agentic -u agentic -p agentic-mongo-pass --eval "db.people.find().pretty()"
 ```
 
 ---

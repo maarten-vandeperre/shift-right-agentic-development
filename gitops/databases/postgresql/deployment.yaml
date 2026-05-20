@@ -23,6 +23,9 @@ spec:
           ports:
             - containerPort: 5432
               protocol: TCP
+          env:
+            - name: POSTGRESQL_EXTENSIONS
+              value: uuid-ossp
           envFrom:
             - secretRef:
                 name: postgresql-credentials

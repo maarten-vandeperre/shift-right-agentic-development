@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: mongodb
-          image: docker.io/bitnami/mongodb:7.0
+          image: registry.access.redhat.com/rhscl/mongodb-36-rhel7:latest
           ports:
             - containerPort: 27017
               protocol: TCP
@@ -28,9 +28,9 @@ spec:
                 name: mongodb-credentials
           volumeMounts:
             - name: data
-              mountPath: /bitnami/mongodb
+              mountPath: /var/lib/mongodb/data
             - name: init-scripts
-              mountPath: /docker-entrypoint-initdb.d
+              mountPath: /usr/share/container-scripts/mongodb/init
           resources:
             requests:
               cpu: 100m
@@ -41,17 +41,17 @@ spec:
           readinessProbe:
             exec:
               command:
-                - mongosh
-                - --eval
-                - "db.adminCommand('ping')"
+                - /bin/sh
+                - -c
+                - "mongo 127.0.0.1:27017/$MONGODB_DATABASE -u $MONGODB_USER -p $MONGODB_PASSWORD --eval 'quit()'"
             initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
             exec:
               command:
-                - mongosh
-                - --eval
-                - "db.adminCommand('ping')"
+                - /bin/sh
+                - -c
+                - "mongo 127.0.0.1:27017/$MONGODB_DATABASE -u $MONGODB_USER -p $MONGODB_PASSWORD --eval 'quit()'"
             initialDelaySeconds: 30
             periodSeconds: 15
       volumes:

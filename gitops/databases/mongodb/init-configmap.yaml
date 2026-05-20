@@ -6,7 +6,7 @@ metadata:
   labels:
     app: mongodb
 data:
-  init.js: |
+  seed.js: |
     db.people.drop();
 
     db.people.insertMany([
