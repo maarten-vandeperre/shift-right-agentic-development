@@ -31,90 +31,62 @@ check_argocd_ready() {
   echo ""
 }
 
-create_app() {
-  local app_name="$1"
-  local app_path="$2"
-  local dest_namespace="$3"
-
-  echo "-------------------------------------------"
-  echo "Creating Application: ${app_name}"
-  echo "  Path:             ${app_path}"
-  echo "  Dest Namespace:   ${dest_namespace}"
-
-  if oc get application "${app_name}" -n "${NAMESPACE}" &>/dev/null; then
-    echo "  Status: Already exists, updating..."
-    oc apply -f - <<EOF
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: ${app_name}
-  namespace: ${NAMESPACE}
-spec:
-  project: default
-  source:
-    repoURL: ${REPO_URL}
-    targetRevision: ${TARGET_REVISION}
-    path: ${app_path}
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: ${dest_namespace}
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-      - ServerSideApply=true
-EOF
-  else
-    echo "  Status: Creating..."
-    oc apply -f - <<EOF
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: ${app_name}
-  namespace: ${NAMESPACE}
-spec:
-  project: default
-  source:
-    repoURL: ${REPO_URL}
-    targetRevision: ${TARGET_REVISION}
-    path: ${app_path}
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: ${dest_namespace}
-  syncPolicy:
-    automated:
-      prune: true
-      selfHeal: true
-    syncOptions:
-      - CreateNamespace=true
-      - ServerSideApply=true
-EOF
-  fi
-
-  echo "  Done."
-  echo ""
+cleanup_old_apps() {
+  local old_apps=("operator-service-mesh-3" "operator-devspaces" "operator-amq-streams")
+  for app in "${old_apps[@]}"; do
+    if oc get application "${app}" -n "${NAMESPACE}" &>/dev/null; then
+      echo "Removing legacy Application: ${app}"
+      oc delete application "${app}" -n "${NAMESPACE}" --wait=false
+    fi
+  done
 }
 
 check_argocd_ready
 
-create_app "operator-service-mesh-3" \
-  "gitops/operators/service-mesh-3" \
-  "${NAMESPACE}"
+cleanup_old_apps
 
-create_app "operator-devspaces" \
-  "gitops/operators/devspaces" \
-  "${NAMESPACE}"
+echo "-------------------------------------------"
+echo "Creating Application: cluster-operators"
+echo "  Path:             gitops/operators"
+echo "  Dest Namespace:   ${NAMESPACE}"
 
-create_app "operator-amq-streams" \
-  "gitops/operators/amq-streams" \
-  "${NAMESPACE}"
+oc apply -f - <<EOF
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cluster-operators
+  namespace: ${NAMESPACE}
+spec:
+  project: default
+  source:
+    repoURL: ${REPO_URL}
+    targetRevision: ${TARGET_REVISION}
+    path: gitops/operators
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ${NAMESPACE}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+EOF
+
+echo "  Done."
+echo ""
 
 echo "============================================"
-echo "  All ArgoCD Applications configured."
+echo "  ArgoCD Application configured."
 echo ""
-echo "  View them in the ArgoCD UI:"
+echo "  The 'cluster-operators' application manages:"
+echo "    - OperatorGroup (AllNamespaces mode)"
+echo "    - Service Mesh 3 subscription"
+echo "    - Dev Spaces subscription"
+echo "    - AMQ Streams subscription"
+echo ""
+echo "  View in the ArgoCD UI:"
 ROUTE=$(oc get route argocd-server -n "${NAMESPACE}" -o jsonpath='{.spec.host}' 2>/dev/null || echo "<argocd-route-not-found>")
 echo "    https://${ROUTE}"
 echo ""

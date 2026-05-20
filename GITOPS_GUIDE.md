@@ -125,16 +125,22 @@ Run the configuration script to create ArgoCD Applications for all three operato
 ./scripts/configure-argocd-apps.sh
 ```
 
-The script creates three ArgoCD Applications:
-- `operator-service-mesh-3` - manages Service Mesh 3 operator installation
-- `operator-devspaces` - manages Dev Spaces operator installation
-- `operator-amq-streams` - manages AMQ Streams operator installation
+The script creates a single ArgoCD Application called `cluster-operators` that points to
+the root `gitops/operators` path. Through Kustomize, this deploys:
+- The **OperatorGroup** in AllNamespaces mode
+- **Service Mesh 3** operator subscription
+- **Dev Spaces** operator subscription
+- **AMQ Streams** operator subscription
 
-Each Application is configured with:
+The Application is configured with:
 - **Automated sync** with pruning and self-healing
 - **Server-side apply** for CRD-heavy operator resources
 - **CreateNamespace** sync option enabled
 - **Destination namespace**: `agentic` (matching the ArgoCD managed namespace)
+
+> Using a single Application ensures the OperatorGroup is always deployed alongside
+> the Subscriptions. Without the OperatorGroup, OLM cannot generate InstallPlans
+> and the operators will not install.
 
 #### Environment Variables
 
@@ -154,21 +160,21 @@ GIT_REVISION=develop ./scripts/configure-argocd-apps.sh
 
 ### Manual Application Creation
 
-To create a single operator application manually:
+To create the operators application manually:
 
 ```bash
 oc apply -f - <<EOF
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: operator-service-mesh-3
+  name: cluster-operators
   namespace: agentic
 spec:
   project: default
   source:
     repoURL: https://github.com/maarten-vandeperre/shift-right-agentic-development.git
     targetRevision: main
-    path: gitops/operators/service-mesh-3
+    path: gitops/operators
   destination:
     server: https://kubernetes.default.svc
     namespace: agentic
