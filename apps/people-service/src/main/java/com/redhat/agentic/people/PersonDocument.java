@@ -1,7 +1,9 @@
 package com.redhat.agentic.people;
 
 import io.quarkus.mongodb.panache.PanacheMongoEntity;
+import io.quarkus.mongodb.panache.common.MongoEntity;
 
+@MongoEntity(collection = "people")
 public class PersonDocument extends PanacheMongoEntity {
 
     private String ref;
