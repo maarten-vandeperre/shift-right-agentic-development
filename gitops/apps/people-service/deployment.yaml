@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: people-service
+  namespace: agentic
+  labels:
+    app: people-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: people-service
+  template:
+    metadata:
+      labels:
+        app: people-service
+    spec:
+      containers:
+        - name: people-service
+          image: ghcr.io/maarten-vandeperre/shift-right-people-service:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: MONGODB_CONNECTION_STRING
+              value: mongodb://$(MONGODB_USER):$(MONGODB_PASSWORD)@mongodb:27017/agentic?authSource=agentic
+            - name: MONGODB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-credentials
+                  key: MONGODB_USER
+            - name: MONGODB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-credentials
+                  key: MONGODB_PASSWORD
+            - name: MONGODB_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: mongodb-credentials
+                  key: MONGODB_DATABASE
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /q/health/ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 15

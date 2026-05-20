@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: people-service
+  namespace: agentic
+  labels:
+    app: people-service
+spec:
+  selector:
+    app: people-service
+  ports:
+    - port: 8080
+      targetPort: 8080
+      protocol: TCP
+  type: ClusterIP

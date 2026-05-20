@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: agentic
+  labels:
+    app: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/maarten-vandeperre/shift-right-frontend:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: VITE_PERSON_API
+              value: PLACEHOLDER_PERSON_API
+            - name: VITE_ADDRESS_API
+              value: PLACEHOLDER_ADDRESS_API
+            - name: VITE_PEOPLE_API
+              value: PLACEHOLDER_PEOPLE_API
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 15

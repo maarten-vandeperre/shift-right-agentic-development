@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: address-service
+  namespace: agentic
+  labels:
+    app: address-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: address-service
+  template:
+    metadata:
+      labels:
+        app: address-service
+    spec:
+      containers:
+        - name: address-service
+          image: ghcr.io/maarten-vandeperre/shift-right-address-service:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: POSTGRESQL_JDBC_URL
+              value: jdbc:postgresql://postgresql:5432/agentic
+            - name: POSTGRESQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-credentials
+                  key: POSTGRESQL_USER
+            - name: POSTGRESQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql-credentials
+                  key: POSTGRESQL_PASSWORD
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /q/health/ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 15
