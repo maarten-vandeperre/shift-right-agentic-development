@@ -29,8 +29,6 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/mongodb/data
-            - name: init-scripts
-              mountPath: /usr/share/container-scripts/mongodb/init
           resources:
             requests:
               cpu: 100m
@@ -58,6 +56,3 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: mongodb-data
-        - name: init-scripts
-          configMap:
-            name: mongodb-init

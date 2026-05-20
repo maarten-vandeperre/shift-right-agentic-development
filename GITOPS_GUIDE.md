@@ -26,14 +26,14 @@ gitops/
 │   ├── postgresql/
 │   │   ├── secret.yaml          # PostgreSQL credentials
 │   │   ├── pvc.yaml             # Persistent storage
-│   │   ├── init-configmap.yaml  # Schema + seed data SQL
+│   │   ├── init-job.yaml        # PostSync Job: schema + seed data
 │   │   ├── deployment.yaml
 │   │   ├── service.yaml
 │   │   └── kustomization.yaml
 │   └── mongodb/
 │       ├── secret.yaml          # MongoDB credentials
 │       ├── pvc.yaml             # Persistent storage
-│       ├── init-configmap.yaml  # Seed data JS
+│       ├── init-job.yaml        # PostSync Job: seed data
 │       ├── deployment.yaml
 │       ├── service.yaml
 │       └── kustomization.yaml
