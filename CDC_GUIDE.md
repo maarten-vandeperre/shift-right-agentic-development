@@ -124,7 +124,33 @@ oc rollout restart deploy/postgresql -n agentic
 
 ## Deployment
 
-### Step 1: Deploy CDC Infrastructure via ArgoCD
+### Automated (Recommended)
+
+A single script handles the entire CDC deployment end-to-end:
+
+```bash
+./scripts/deploy-cdc.sh
+```
+
+This script performs all steps automatically:
+
+1. **Configures ArgoCD** — creates the `cdc` Application (Kafka, KafkaConnect, Debezium, topics, WAL config)
+2. **Waits for Kafka** — polls up to 10 minutes for the Kafka cluster to become ready
+3. **Restarts PostgreSQL** — applies the `wal_level=logical` change and verifies it
+4. **Builds and pushes images** — runs `build-and-push-images.sh` (cdc-service + updated frontend)
+5. **Restarts deployments** — rolls out cdc-service and frontend with the new images
+
+At the end it prints the status of all CDC components and the application URLs.
+
+> **Note**: The script assumes the GHCR pull secret is already configured on the cluster
+> (via `./scripts/create-ghcr-pull-secret.sh`). If using public packages instead, make
+> sure `shift-right-cdc-service` is set to public on GHCR after the first push.
+
+### Manual Steps
+
+If you prefer to run each step individually:
+
+#### Step 1: Deploy CDC Infrastructure via ArgoCD
 
 ```bash
 ./scripts/configure-argocd-apps.sh
@@ -137,7 +163,7 @@ This creates the `cdc` ArgoCD Application which deploys:
 - CDC Kafka topics
 - PostgreSQL WAL configuration job
 
-### Step 2: Restart PostgreSQL for WAL Configuration
+#### Step 2: Restart PostgreSQL for WAL Configuration
 
 After the WAL config job runs, restart PostgreSQL:
 
@@ -153,15 +179,25 @@ oc exec deploy/postgresql -n agentic -- psql -U agentic -d agentic -c "SHOW wal_
 
 Expected output: `logical`
 
-### Step 3: Build and Deploy the CDC Service
+#### Step 3: Build and Deploy the CDC Service
 
 ```bash
 ./scripts/build-and-push-images.sh
 ```
 
-This builds and pushes `ghcr.io/maarten-vandeperre/shift-right-cdc-service:latest`.
+This builds and pushes `ghcr.io/maarten-vandeperre/shift-right-cdc-service:latest`
+(along with the updated frontend containing the CDC tab).
 
-### Step 4: Verify the Pipeline
+After pushing, ensure the image is pullable:
+
+- **Pull secret**: If already configured via `./scripts/create-ghcr-pull-secret.sh`, no action needed.
+- **Public**: Go to https://github.com/users/maarten-vandeperre/packages/container/shift-right-cdc-service/settings
+  → **Danger Zone** → **Change visibility** → **Public**
+
+See the [GHCR Image Pull Secret](GITOPS_GUIDE.md#ghcr-image-pull-secret) section in the
+GitOps Guide for details.
+
+#### Step 4: Verify the Pipeline
 
 Check all components are running:
 

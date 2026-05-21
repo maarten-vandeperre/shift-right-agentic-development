@@ -37,7 +37,8 @@ scripts/
 ├── get-app-urls.sh                  # Application route URLs
 ├── configure-argocd-apps.sh         # Create all ArgoCD Applications
 ├── build-and-push-images.sh         # Build & push container images to GHCR
-└── create-ghcr-pull-secret.sh       # Create GHCR image pull secret on OpenShift
+├── create-ghcr-pull-secret.sh       # Create GHCR image pull secret on OpenShift
+└── deploy-cdc.sh                    # End-to-end CDC pipeline deployment
 ```
 
 ## Operators Managed
