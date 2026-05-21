@@ -42,3 +42,4 @@ spec:
       auth:
         type: bearer
         use_kiali_token: true
+        insecure_skip_verify: true
