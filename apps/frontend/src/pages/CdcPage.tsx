@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { API_URLS } from '../config';
 
 interface CdcEvent {
@@ -20,13 +20,12 @@ export default function CdcPage() {
   const [events, setEvents] = useState<CdcEvent[]>([]);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const historyUrl = API_URLS.cdcEvents.replace(/\/events$/, '/history');
     fetch(historyUrl)
       .then((r) => r.json())
-      .then((data: CdcEvent[]) => setEvents(data))
+      .then((data: CdcEvent[]) => setEvents([...data].reverse()))
       .catch(() => {});
 
     const eventSource = new EventSource(API_URLS.cdcEvents);
@@ -39,7 +38,7 @@ export default function CdcPage() {
     eventSource.onmessage = (e) => {
       try {
         const event: CdcEvent = JSON.parse(e.data);
-        setEvents((prev) => [...prev.slice(-499), event]);
+        setEvents((prev) => [event, ...prev.slice(0, 499)]);
       } catch {
         // skip malformed events
       }
@@ -53,9 +52,7 @@ export default function CdcPage() {
     return () => eventSource.close();
   }, []);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [events]);
+  
 
   function formatPayload(raw: string): string {
     try {
@@ -151,7 +148,6 @@ export default function CdcPage() {
               )}
             </div>
           ))}
-          <div ref={bottomRef} />
         </div>
       )}
     </div>

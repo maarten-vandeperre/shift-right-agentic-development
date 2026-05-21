@@ -21,3 +21,7 @@ spec:
     slot.name: debezium_cdc
     publication.name: dbz_publication
     publication.autocreate.mode: filtered
+    key.converter: org.apache.kafka.connect.json.JsonConverter
+    key.converter.schemas.enable: false
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter.schemas.enable: false

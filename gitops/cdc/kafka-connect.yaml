@@ -39,6 +39,10 @@ spec:
             group: io.debezium
             artifact: debezium-connector-postgres
             version: 2.7.3.Final
+          - type: maven
+            group: org.apache.kafka
+            artifact: connect-json
+            version: 4.2.0
   resources:
     requests:
       cpu: 200m
