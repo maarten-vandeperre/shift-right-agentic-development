@@ -17,6 +17,13 @@ spec:
       labels:
         app: postgresql
     spec:
+      initContainers:
+        - name: fix-permissions
+          image: registry.access.redhat.com/ubi9/ubi-minimal:latest
+          command: ["sh", "-c", "chmod -R 777 /var/lib/pgsql/data || true"]
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/pgsql/data
       containers:
         - name: postgresql
           image: image-registry.openshift-image-registry.svc:5000/openshift/postgresql:15-el9
