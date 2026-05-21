@@ -23,17 +23,17 @@ spec:
               protocol: TCP
           env:
             - name: VITE_PERSON_API
-              value: https://person-service-agentic.apps.ocp.h7xz9.sandbox1562.opentlc.com/api/persons
+              value: /proxy/persons/api/persons
             - name: VITE_ADDRESS_API
-              value: https://address-service-agentic.apps.ocp.h7xz9.sandbox1562.opentlc.com/api/addresses
+              value: /proxy/addresses/api/addresses
             - name: VITE_PEOPLE_API
-              value: https://people-service-agentic.apps.ocp.h7xz9.sandbox1562.opentlc.com/api/people
+              value: /proxy/people/api/people
             - name: VITE_CDC_API
-              value: https://cdc-service-agentic.apps.ocp.h7xz9.sandbox1562.opentlc.com/api/cdc/events
+              value: /proxy/cdc/api/cdc/events
             - name: VITE_CHAT_API
-              value: https://chat-service-agentic.apps.ocp.h7xz9.sandbox1562.opentlc.com/api/chat
+              value: /proxy/chat/api/chat
             - name: VITE_MESH_API
-              value: https://mesh-config-service-agentic.apps.ocp.h7xz9.sandbox1562.opentlc.com/api/mesh
+              value: /proxy/mesh/api/mesh
             - name: VITE_KIALI_URL
               value: https://kiali-kiali.apps.ocp.h7xz9.sandbox1562.opentlc.com
           resources:
