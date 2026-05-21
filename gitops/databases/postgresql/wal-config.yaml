@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgresql-custom-config
+  namespace: agentic
+  labels:
+    app: postgresql
+data:
+  custom.conf: |
+    wal_level = logical
+    max_replication_slots = 4
+    max_wal_senders = 4

@@ -3,6 +3,7 @@ kind: Kustomization
 resources:
   - secret.yaml
   - pvc.yaml
+  - wal-config.yaml
   - deployment.yaml
   - service.yaml
   - init-job.yaml

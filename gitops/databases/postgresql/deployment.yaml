@@ -36,6 +36,8 @@ spec:
           volumeMounts:
             - name: data
               mountPath: /var/lib/pgsql/data
+            - name: custom-config
+              mountPath: /opt/app-root/src/postgresql-cfg
           resources:
             requests:
               cpu: 100m
@@ -60,3 +62,6 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: postgresql-data
+        - name: custom-config
+          configMap:
+            name: postgresql-custom-config
