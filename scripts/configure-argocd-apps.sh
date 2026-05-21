@@ -90,6 +90,10 @@ setup_service_mesh() {
     oc apply -f "${MESH_DIR}/egress.yaml" 2>/dev/null || true
     oc apply -f "${MESH_DIR}/kiali.yaml" 2>/dev/null || true
     oc apply -f "${MESH_DIR}/kiali-route.yaml" 2>/dev/null || true
+
+    echo "Granting Kiali monitoring access..."
+    oc adm policy add-cluster-role-to-user cluster-monitoring-view -z kiali-service-account -n kiali 2>/dev/null || true
+
     echo "Service Mesh configuration applied."
     echo ""
   fi
