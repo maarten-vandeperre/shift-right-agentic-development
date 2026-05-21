@@ -74,6 +74,10 @@ spec:
                   ('01234567-89ab-cdef-0123-456789abcdef', 'Alice', 'Williams', 'alice.williams@example.com', 'f6a7b8c9-d0e1-2345-fabc-456789012345')
               ON CONFLICT (ref) DO NOTHING;
 
+              ALTER TABLE person REPLICA IDENTITY FULL;
+              ALTER TABLE address REPLICA IDENTITY FULL;
+              ALTER ROLE agentic WITH REPLICATION;
+
               EOSQL
 
               echo "Database initialization complete."
