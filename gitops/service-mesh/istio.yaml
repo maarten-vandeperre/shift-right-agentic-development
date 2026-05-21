@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: istio-system
+  name: istio-cni
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: istio-cni
+  name: agentic-istio
 ---
 apiVersion: sailoperator.io/v1
 kind: IstioCNI
@@ -22,11 +22,13 @@ metadata:
   name: agentic-mesh
 spec:
   version: v1.26.2
-  namespace: istio-system
+  namespace: agentic-istio
   values:
     global:
-      istioNamespace: istio-system
+      istioNamespace: agentic-istio
     pilot:
+      cni:
+        enabled: true
       env:
         PILOT_ENABLE_STATUS: "true"
     meshConfig:

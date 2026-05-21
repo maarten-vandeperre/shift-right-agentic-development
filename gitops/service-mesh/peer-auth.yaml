@@ -1,0 +1,30 @@
+apiVersion: security.istio.io/v1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: agentic
+spec:
+  mtls:
+    mode: PERMISSIVE
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: postgresql-no-mtls
+  namespace: agentic
+spec:
+  host: postgresql.agentic.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE
+---
+apiVersion: networking.istio.io/v1
+kind: DestinationRule
+metadata:
+  name: mongodb-no-mtls
+  namespace: agentic
+spec:
+  host: mongodb.agentic.svc.cluster.local
+  trafficPolicy:
+    tls:
+      mode: DISABLE

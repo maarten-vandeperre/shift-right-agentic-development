@@ -12,6 +12,8 @@ spec:
       app: person-service
   template:
     metadata:
+      annotations:
+        traffic.sidecar.istio.io/excludeOutboundPorts: "5432,27017"
       labels:
         app: person-service
     spec:

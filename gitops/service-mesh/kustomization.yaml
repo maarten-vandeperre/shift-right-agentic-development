@@ -4,5 +4,6 @@ resources:
   - istio.yaml
   - namespace-enrollment.yaml
   - egress.yaml
+  - peer-auth.yaml
   - kiali.yaml
   - kiali-route.yaml

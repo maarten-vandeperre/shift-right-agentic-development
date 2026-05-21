@@ -21,7 +21,7 @@ metadata:
   name: kiali
   namespace: kiali
 spec:
-  istio_namespace: istio-system
+  istio_namespace: agentic-istio
   auth:
     strategy: anonymous
   deployment:
@@ -36,7 +36,7 @@ spec:
       allow_all: true
   external_services:
     istio:
-      root_namespace: istio-system
+      root_namespace: agentic-istio
     prometheus:
       url: https://thanos-querier.openshift-monitoring.svc.cluster.local:9091
       auth:
