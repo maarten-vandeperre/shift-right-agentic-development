@@ -4,4 +4,5 @@ resources:
   - person-service
   - address-service
   - people-service
+  - cdc-service
   - frontend

@@ -1,0 +1,11 @@
+com/redhat/agentic/cdc/consumer/PersonChangeConsumer.class
+com/redhat/agentic/cdc/client/dto/AddressDto.class
+com/redhat/agentic/cdc/client/PersonServiceClient.class
+com/redhat/agentic/cdc/client/PeopleServiceClient.class
+com/redhat/agentic/cdc/client/dto/PersonDto.class
+com/redhat/agentic/cdc/resource/CdcEventsResource.class
+com/redhat/agentic/cdc/client/dto/PeopleDto.class
+com/redhat/agentic/cdc/client/AddressServiceClient.class
+com/redhat/agentic/cdc/consumer/AddressChangeConsumer.class
+com/redhat/agentic/cdc/service/CdcEventBroadcaster.class
+com/redhat/agentic/cdc/model/CdcEvent.class

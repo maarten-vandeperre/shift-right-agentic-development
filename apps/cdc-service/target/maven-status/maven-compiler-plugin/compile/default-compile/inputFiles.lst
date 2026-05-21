@@ -1,0 +1,11 @@
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/cdc-service/src/main/java/com/redhat/agentic/cdc/client/AddressServiceClient.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/cdc-service/src/main/java/com/redhat/agentic/cdc/client/PeopleServiceClient.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/cdc-service/src/main/java/com/redhat/agentic/cdc/client/PersonServiceClient.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/cdc-service/src/main/java/com/redhat/agentic/cdc/client/dto/AddressDto.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/cdc-service/src/main/java/com/redhat/agentic/cdc/client/dto/PeopleDto.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/cdc-service/src/main/java/com/redhat/agentic/cdc/client/dto/PersonDto.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/cdc-service/src/main/java/com/redhat/agentic/cdc/consumer/AddressChangeConsumer.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/cdc-service/src/main/java/com/redhat/agentic/cdc/consumer/PersonChangeConsumer.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/cdc-service/src/main/java/com/redhat/agentic/cdc/model/CdcEvent.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/cdc-service/src/main/java/com/redhat/agentic/cdc/resource/CdcEventsResource.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/cdc-service/src/main/java/com/redhat/agentic/cdc/service/CdcEventBroadcaster.java

@@ -1,0 +1,37 @@
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaConnect
+metadata:
+  name: cdc-connect
+  namespace: agentic
+  annotations:
+    strimzi.io/use-connector-resources: "true"
+spec:
+  version: 3.9.0
+  replicas: 1
+  bootstrapServers: cdc-cluster-kafka-bootstrap:9092
+  config:
+    group.id: cdc-connect-cluster
+    offset.storage.topic: cdc-connect-offsets
+    config.storage.topic: cdc-connect-configs
+    status.storage.topic: cdc-connect-status
+    offset.storage.replication.factor: 1
+    config.storage.replication.factor: 1
+    status.storage.replication.factor: 1
+  build:
+    output:
+      type: imagestream
+      image: cdc-connect:latest
+    plugins:
+      - name: debezium-postgres
+        artifacts:
+          - type: maven
+            group: io.debezium
+            artifact: debezium-connector-postgres
+            version: 2.7.3.Final
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi

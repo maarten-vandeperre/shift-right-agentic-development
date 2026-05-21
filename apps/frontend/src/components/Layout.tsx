@@ -4,6 +4,7 @@ const links = [
   { to: '/persons', label: 'Persons' },
   { to: '/addresses', label: 'Addresses' },
   { to: '/people', label: 'People' },
+  { to: '/cdc', label: 'CDC Events' },
 ];
 
 export default function Layout() {

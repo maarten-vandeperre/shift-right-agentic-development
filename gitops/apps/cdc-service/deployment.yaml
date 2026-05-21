@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cdc-service
+  namespace: agentic
+  labels:
+    app: cdc-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cdc-service
+  template:
+    metadata:
+      labels:
+        app: cdc-service
+    spec:
+      containers:
+        - name: cdc-service
+          image: ghcr.io/maarten-vandeperre/shift-right-cdc-service:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: KAFKA_BOOTSTRAP
+              value: cdc-cluster-kafka-bootstrap:9092
+            - name: PERSON_SERVICE_URL
+              value: http://person-service:8080
+            - name: ADDRESS_SERVICE_URL
+              value: http://address-service:8080
+            - name: PEOPLE_SERVICE_URL
+              value: http://people-service:8080
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /q/health/ready
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 15
