@@ -37,6 +37,12 @@ label_target_namespace() {
   echo ""
 }
 
+setup_scc() {
+  echo "Granting anyuid SCC to default SA in ${NAMESPACE}..."
+  oc adm policy add-scc-to-user anyuid -z default -n "${NAMESPACE}" 2>/dev/null || true
+  echo ""
+}
+
 create_app() {
   local app_name="$1"
   local app_path="$2"
@@ -76,6 +82,7 @@ EOF
 
 check_argocd_ready
 label_target_namespace
+setup_scc
 
 create_app "cluster-operators" "gitops/operators" "openshift-operators"
 create_app "databases" "gitops/databases" "${NAMESPACE}"
