@@ -73,7 +73,7 @@ spec:
       prune: true
       selfHeal: true
     syncOptions:
-      - ServerSideApply=true
+      - CreateNamespace=true
 EOF
 
   echo "  Done."
