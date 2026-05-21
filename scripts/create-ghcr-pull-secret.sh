@@ -39,12 +39,17 @@ oc create secret docker-registry ghcr-pull-secret \
   --docker-password="${GITHUB_TOKEN}" \
   -n "${NAMESPACE}"
 
-echo "Linking secret to default service account..."
+echo "Linking secret to service accounts..."
 oc secrets link default ghcr-pull-secret --for=pull -n "${NAMESPACE}"
+for SA in $(oc get sa -n "${NAMESPACE}" -o jsonpath='{.items[*].metadata.name}' 2>/dev/null); do
+  if [[ "${SA}" != "default" && "${SA}" != "builder" && "${SA}" != "deployer" ]]; then
+    oc secrets link "${SA}" ghcr-pull-secret --for=pull -n "${NAMESPACE}" 2>/dev/null || true
+  fi
+done
 
 echo ""
 echo "Restarting application deployments..."
-for APP in person-service address-service people-service frontend; do
+for APP in person-service address-service people-service cdc-service chat-service mesh-config-service frontend; do
   if oc get deploy "${APP}" -n "${NAMESPACE}" &>/dev/null; then
     oc rollout restart deploy/"${APP}" -n "${NAMESPACE}"
     echo "  Restarted: ${APP}"
