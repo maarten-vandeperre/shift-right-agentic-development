@@ -37,6 +37,10 @@ spec:
   external_services:
     istio:
       root_namespace: agentic-istio
+    grafana:
+      enabled: true
+      internal_url: http://grafana-service.grafana.svc.cluster.local:3000
+      external_url: https://grafana-route-grafana.apps.ocp.h7xz9.sandbox1562.opentlc.com
     prometheus:
       url: https://thanos-querier.openshift-monitoring.svc.cluster.local:9091
       auth:
