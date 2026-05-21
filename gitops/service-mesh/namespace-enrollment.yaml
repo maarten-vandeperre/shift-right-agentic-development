@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   name: agentic
   labels:
-    istio-injection: enabled
+    istio.io/rev: agentic-mesh
