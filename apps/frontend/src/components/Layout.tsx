@@ -8,6 +8,8 @@ const links = [
   { to: '/chat', label: 'Chatter Time' },
   { to: '/mcp', label: 'MCP' },
   { to: '/openapi', label: 'OpenAPI' },
+  { to: '/kiali', label: 'Kiali' },
+  { to: '/mesh', label: 'Service Mesh' },
 ];
 
 export default function Layout() {

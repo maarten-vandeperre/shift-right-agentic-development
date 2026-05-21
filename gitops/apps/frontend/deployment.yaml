@@ -32,6 +32,10 @@ spec:
               value: https://cdc-service-agentic.apps.ocp.h7xz9.sandbox1562.opentlc.com/api/cdc/events
             - name: VITE_CHAT_API
               value: https://chat-service-agentic.apps.ocp.h7xz9.sandbox1562.opentlc.com/api/chat
+            - name: VITE_MESH_API
+              value: https://mesh-config-service-agentic.apps.ocp.h7xz9.sandbox1562.opentlc.com/api/mesh
+            - name: VITE_KIALI_URL
+              value: https://kiali-kiali.apps.ocp.h7xz9.sandbox1562.opentlc.com
           resources:
             requests:
               cpu: 50m

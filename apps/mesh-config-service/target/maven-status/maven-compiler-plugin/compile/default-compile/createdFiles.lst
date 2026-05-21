@@ -1,0 +1,4 @@
+com/redhat/agentic/mesh/service/MeshConfigService.class
+com/redhat/agentic/mesh/model/TrafficBlockConfig.class
+com/redhat/agentic/mesh/model/FaultConfig.class
+com/redhat/agentic/mesh/resource/MeshConfigResource.class

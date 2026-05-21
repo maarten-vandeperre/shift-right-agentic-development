@@ -1,0 +1,50 @@
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: allow-openai-api
+  namespace: agentic
+spec:
+  hosts:
+    - api.openai.com
+    - "*.openai.com"
+  ports:
+    - number: 443
+      name: https
+      protocol: TLS
+  location: MESH_EXTERNAL
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: allow-ollama
+  namespace: agentic
+spec:
+  hosts:
+    - "*.ollama.ai"
+  ports:
+    - number: 443
+      name: https
+      protocol: TLS
+    - number: 11434
+      name: http-ollama
+      protocol: HTTP
+  location: MESH_EXTERNAL
+  resolution: DNS
+---
+apiVersion: networking.istio.io/v1
+kind: ServiceEntry
+metadata:
+  name: allow-generic-llm
+  namespace: agentic
+spec:
+  hosts:
+    - "*.azure.com"
+    - "*.googleapis.com"
+    - "*.anthropic.com"
+  ports:
+    - number: 443
+      name: https
+      protocol: TLS
+  location: MESH_EXTERNAL
+  resolution: DNS

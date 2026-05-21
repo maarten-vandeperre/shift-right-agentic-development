@@ -6,4 +6,5 @@ resources:
   - people-service
   - cdc-service
   - chat-service
+  - mesh-config-service
   - frontend

@@ -1,0 +1,39 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: kiali-ossm
+  namespace: openshift-operators
+spec:
+  channel: stable
+  installPlanApproval: Automatic
+  name: kiali-ossm
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kiali
+---
+apiVersion: kiali.io/v1alpha1
+kind: Kiali
+metadata:
+  name: kiali
+  namespace: kiali
+spec:
+  istio_namespace: istio-system
+  auth:
+    strategy: anonymous
+  deployment:
+    namespace: kiali
+    accessible_namespaces:
+      - agentic
+    view_only_mode: false
+  server:
+    web_fqdn: ""
+    web_root: /
+    cors:
+      allow_all: true
+  external_services:
+    istio:
+      root_namespace: istio-system

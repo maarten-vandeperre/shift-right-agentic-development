@@ -1,0 +1,16 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: mesh-config-service
+  namespace: agentic
+  labels:
+    app: mesh-config-service
+spec:
+  to:
+    kind: Service
+    name: mesh-config-service
+  port:
+    targetPort: 8080
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

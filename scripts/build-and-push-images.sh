@@ -8,7 +8,7 @@ APPS_DIR="$(cd "$(dirname "$0")/../apps" && pwd)"
 BUILDER="${CONTAINER_BUILDER:-podman}"
 PLATFORM="${BUILD_PLATFORM:-linux/amd64}"
 
-SERVICES=("person-service" "address-service" "people-service" "cdc-service" "chat-service" "frontend")
+SERVICES=("person-service" "address-service" "people-service" "cdc-service" "chat-service" "mesh-config-service" "frontend")
 
 echo "============================================"
 echo "  Build & Push Container Images"

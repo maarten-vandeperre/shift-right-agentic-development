@@ -80,9 +80,25 @@ EOF
   echo ""
 }
 
+setup_service_mesh() {
+  SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+  MESH_DIR="${SCRIPT_DIR}/../gitops/service-mesh"
+  if [[ -d "${MESH_DIR}" ]]; then
+    echo "Applying Service Mesh configuration (cluster-scoped)..."
+    oc apply -f "${MESH_DIR}/istio.yaml" 2>/dev/null || true
+    oc apply -f "${MESH_DIR}/namespace-enrollment.yaml" 2>/dev/null || true
+    oc apply -f "${MESH_DIR}/egress.yaml" 2>/dev/null || true
+    oc apply -f "${MESH_DIR}/kiali.yaml" 2>/dev/null || true
+    oc apply -f "${MESH_DIR}/kiali-route.yaml" 2>/dev/null || true
+    echo "Service Mesh configuration applied."
+    echo ""
+  fi
+}
+
 check_argocd_ready
 label_target_namespace
 setup_scc
+setup_service_mesh
 
 create_app "cluster-operators" "gitops/operators" "openshift-operators"
 create_app "databases" "gitops/databases" "${NAMESPACE}"
@@ -99,12 +115,15 @@ echo "  'databases' manages:"
 echo "    - PostgreSQL + MongoDB deployments and seed data"
 echo ""
 echo "  'applications' manages:"
-echo "    - person-service, address-service, people-service, cdc-service"
+echo "    - person/address/people/cdc/chat/mesh-config services"
 echo "    - frontend (React dashboard)"
 echo ""
 echo "  'cdc' manages:"
 echo "    - Kafka cluster, KafkaConnect, Debezium connector"
-echo "    - CDC topics, PostgreSQL WAL configuration"
+echo ""
+echo "  Service Mesh (applied directly):"
+echo "    - Istio control plane, IstioCNI, Kiali"
+echo "    - Egress rules, namespace enrollment"
 echo ""
 echo "  View in the ArgoCD UI:"
 ROUTE=$(oc get route argocd-server -n "${NAMESPACE}" -o jsonpath='{.spec.host}' 2>/dev/null || echo "<argocd-route-not-found>")

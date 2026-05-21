@@ -7,6 +7,8 @@ import CdcPage from './pages/CdcPage';
 import ChatterPage from './pages/ChatterPage';
 import McpPage from './pages/McpPage';
 import OpenApiPage from './pages/OpenApiPage';
+import KialiPage from './pages/KialiPage';
+import MeshPage from './pages/MeshPage';
 
 export default function App() {
   return (
@@ -21,6 +23,8 @@ export default function App() {
           <Route path="chat" element={<ChatterPage />} />
           <Route path="mcp" element={<McpPage />} />
           <Route path="openapi" element={<OpenApiPage />} />
+          <Route path="kiali" element={<KialiPage />} />
+          <Route path="mesh" element={<MeshPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

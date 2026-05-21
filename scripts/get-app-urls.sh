@@ -9,7 +9,7 @@ echo "  Namespace: ${NAMESPACE}"
 echo "============================================"
 echo ""
 
-APPS=("frontend" "person-service" "address-service" "people-service" "cdc-service" "chat-service")
+APPS=("frontend" "person-service" "address-service" "people-service" "cdc-service" "chat-service" "mesh-config-service")
 
 for APP in "${APPS[@]}"; do
   HOST=$(oc get route "${APP}" -n "${NAMESPACE}" -o jsonpath='{.spec.host}' 2>/dev/null) || HOST=""
@@ -31,6 +31,9 @@ for APP in "${APPS[@]}"; do
     elif [[ "${APP}" == "chat-service" ]]; then
       echo "    Chat:    https://${HOST}/api/chat/ask"
       echo "    MCP:     https://${HOST}/api/chat/mcp/tools"
+      echo "    OpenAPI: https://${HOST}/q/openapi"
+    elif [[ "${APP}" == "mesh-config-service" ]]; then
+      echo "    API:     https://${HOST}/api/mesh"
       echo "    OpenAPI: https://${HOST}/q/openapi"
     fi
   else

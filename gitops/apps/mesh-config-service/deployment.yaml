@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mesh-config-service
+  namespace: agentic
+  labels:
+    app: mesh-config-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mesh-config-service
+  template:
+    metadata:
+      labels:
+        app: mesh-config-service
+    spec:
+      serviceAccountName: mesh-config-sa
+      containers:
+        - name: mesh-config-service
+          image: ghcr.io/maarten-vandeperre/shift-right-mesh-config-service:latest
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: MESH_NAMESPACE
+              value: agentic
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /q/health/ready
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 15

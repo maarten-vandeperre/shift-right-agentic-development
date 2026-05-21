@@ -4,6 +4,8 @@ interface RuntimeConfig {
   PEOPLE_API?: string;
   CDC_API?: string;
   CHAT_API?: string;
+  MESH_API?: string;
+  KIALI_URL?: string;
 }
 
 declare global {
@@ -20,4 +22,6 @@ export const API_URLS = {
   people: runtime.PEOPLE_API || import.meta.env.VITE_PEOPLE_API || 'http://localhost:8083/api/people',
   cdcEvents: runtime.CDC_API || import.meta.env.VITE_CDC_API || 'http://localhost:8084/api/cdc/events',
   chatAsk: runtime.CHAT_API || import.meta.env.VITE_CHAT_API || 'http://localhost:8085/api/chat',
+  meshConfig: runtime.MESH_API || import.meta.env.VITE_MESH_API || 'http://localhost:8086/api/mesh',
+  kialiUrl: runtime.KIALI_URL || import.meta.env.VITE_KIALI_URL || 'http://localhost:20001',
 };
