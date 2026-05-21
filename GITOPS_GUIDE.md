@@ -6,40 +6,38 @@ for the **shift-right-agentic-development** project using a GitOps approach.
 ## Repository Structure
 
 ```
+apps/
+├── maven-settings.xml               # Shared Maven settings (Red Hat GA repo)
+├── person-service/                   # Quarkus REST CRUD – PostgreSQL person table
+├── address-service/                  # Quarkus REST CRUD – PostgreSQL address table
+├── people-service/                   # Quarkus REST CRUD – MongoDB people collection
+└── frontend/                        # React + Vite + Tailwind dashboard
 gitops/
 ├── argocd/
-│   ├── argocd.yaml              # ArgoCD instance definition
+│   ├── argocd.yaml                  # ArgoCD instance definition
 │   └── kustomization.yaml
 ├── operators/
-│   ├── kustomization.yaml       # Root kustomization for all operators
+│   ├── kustomization.yaml
 │   ├── service-mesh-3/
-│   │   ├── subscription.yaml
-│   │   └── kustomization.yaml
 │   ├── devspaces/
-│   │   ├── subscription.yaml
-│   │   └── kustomization.yaml
 │   └── amq-streams/
-│       ├── subscription.yaml
-│       └── kustomization.yaml
 ├── databases/
-│   ├── kustomization.yaml       # Root kustomization for all databases
-│   ├── postgresql/
-│   │   ├── secret.yaml          # PostgreSQL credentials
-│   │   ├── pvc.yaml             # Persistent storage
-│   │   ├── init-job.yaml        # PostSync Job: schema + seed data
-│   │   ├── deployment.yaml
-│   │   ├── service.yaml
-│   │   └── kustomization.yaml
-│   └── mongodb/
-│       ├── secret.yaml          # MongoDB credentials
-│       ├── pvc.yaml             # Persistent storage
-│       ├── init-job.yaml        # PostSync Job: seed data
-│       ├── deployment.yaml
-│       ├── service.yaml
-│       └── kustomization.yaml
+│   ├── kustomization.yaml
+│   ├── postgresql/                  # Deployment, Service, PVC, Secret, init Job
+│   └── mongodb/                     # Deployment, Service, PVC, Secret, init Job
+└── apps/
+    ├── kustomization.yaml
+    ├── person-service/              # Deployment, Service, Route
+    ├── address-service/             # Deployment, Service, Route
+    ├── people-service/              # Deployment, Service, Route
+    └── frontend/                    # Deployment, Service, Route
 scripts/
-├── get-argocd-credentials.sh    # Retrieve ArgoCD URL and admin password
-└── configure-argocd-apps.sh     # Create ArgoCD Applications + label namespaces
+├── get-argocd-credentials.sh        # ArgoCD URL + admin password
+├── get-database-credentials.sh      # PostgreSQL + MongoDB connection URIs
+├── get-app-urls.sh                  # Application route URLs
+├── configure-argocd-apps.sh         # Create all ArgoCD Applications
+├── build-and-push-images.sh         # Build & push container images to GHCR
+└── create-ghcr-pull-secret.sh       # Create GHCR image pull secret on OpenShift
 ```
 
 ## Operators Managed
@@ -144,7 +142,11 @@ The script performs three actions:
    - PostgreSQL deployment with schema and seed data
    - MongoDB deployment with aggregated seed documents
 
-Both Applications use:
+4. **Creates** the `applications` ArgoCD Application (`gitops/apps`), managing:
+   - person-service, address-service, people-service (Quarkus)
+   - frontend (React)
+
+All Applications use:
 - **Automated sync** with pruning and self-healing
 - **Server-side apply** for reliable resource management
 
@@ -298,6 +300,197 @@ oc exec deploy/mongodb -n agentic -- mongo agentic -u agentic -p agentic-mongo-p
 
 ---
 
+## Applications
+
+### Microservices
+
+| Service | Stack | Port | API Path | Database |
+|---------|-------|------|----------|----------|
+| person-service | Quarkus 3.27 (Red Hat build) | 8080 | `/api/persons` | PostgreSQL `person` table |
+| address-service | Quarkus 3.27 (Red Hat build) | 8080 | `/api/addresses` | PostgreSQL `address` table |
+| people-service | Quarkus 3.27 (Red Hat build) | 8080 | `/api/people` | MongoDB `people` collection |
+| frontend | React + Vite + Tailwind | 8080 | `/` | N/A (calls backend APIs) |
+
+All Quarkus services expose:
+- REST CRUD endpoints (GET, POST, PUT, DELETE)
+- OpenAPI spec at `/q/openapi`
+- Health checks at `/q/health/ready` and `/q/health/live`
+
+### Building Container Images
+
+Images are built on **Red Hat UBI 9** base images and pushed to **GitHub Container Registry**.
+
+**Prerequisites:**
+- [Podman](https://podman.io/) installed
+- GitHub Personal Access Token (PAT) with `write:packages` scope
+
+**Authenticate to GHCR:**
+
+```bash
+export GITHUB_TOKEN=ghp_your_token_here
+echo "${GITHUB_TOKEN}" | podman login ghcr.io -u maarten-vandeperre --password-stdin
+```
+
+> Create a PAT at https://github.com/settings/tokens/new — select the `write:packages` scope.
+
+**Build and push all images:**
+
+```bash
+./scripts/build-and-push-images.sh
+```
+
+This builds and pushes:
+
+| Image | Base |
+|-------|------|
+| `ghcr.io/maarten-vandeperre/shift-right-person-service:latest` | `ubi9/openjdk-21-runtime` |
+| `ghcr.io/maarten-vandeperre/shift-right-address-service:latest` | `ubi9/openjdk-21-runtime` |
+| `ghcr.io/maarten-vandeperre/shift-right-people-service:latest` | `ubi9/openjdk-21-runtime` |
+| `ghcr.io/maarten-vandeperre/shift-right-frontend:latest` | `ubi9/nginx-124` |
+
+**Environment variables:**
+
+| Variable | Default | Description |
+|---|---|---|
+| `CONTAINER_BUILDER` | `podman` | Container build tool (`podman` or `docker`) |
+| `CONTAINER_REGISTRY` | `ghcr.io` | Container registry |
+| `GITHUB_OWNER` | `maarten-vandeperre` | GitHub username / org |
+| `GITHUB_TOKEN` | (none) | PAT for registry authentication |
+| `IMAGE_TAG` | `latest` | Image tag |
+
+**Build context:** The build script uses `apps/` as the build context so all Dockerfiles
+can access the shared `apps/maven-settings.xml` (which adds the Red Hat GA Maven repository
+required for `com.redhat.quarkus.platform` dependencies).
+
+### Deploying Applications to OpenShift
+
+After pushing the images, the ArgoCD `applications` Application manages deployment:
+
+```bash
+./scripts/configure-argocd-apps.sh
+```
+
+Each service gets a Deployment, Service, and Route. Database credentials are injected
+from the existing `postgresql-credentials` and `mongodb-credentials` secrets.
+
+The frontend receives backend API URLs via environment variables that are injected
+at container startup through a runtime `config.js` file.
+
+### Getting Application URLs
+
+```bash
+./scripts/get-app-urls.sh
+```
+
+This outputs the OpenShift Route URLs for all four applications, including API and
+OpenAPI endpoints for the backend services.
+
+### GitHub Personal Access Token (PAT)
+
+A GitHub Personal Access Token is required for two operations:
+- **Pushing** container images to GHCR (`build-and-push-images.sh`)
+- **Pulling** private images from GHCR on OpenShift (`create-ghcr-pull-secret.sh`)
+
+#### Creating a PAT
+
+1. Go to https://github.com/settings/tokens/new (classic token) or
+   https://github.com/settings/personal-access-tokens/new (fine-grained token)
+2. Give it a descriptive name, e.g. `shift-right-agentic-ghcr`
+3. Set an expiration (e.g. 90 days)
+4. Select the following scopes:
+
+   **Classic token scopes:**
+   | Scope | Required for |
+   |-------|-------------|
+   | `write:packages` | Pushing images to GHCR |
+   | `read:packages` | Pulling private images from GHCR |
+   | `delete:packages` | (Optional) Deleting old image versions |
+
+   **Fine-grained token permissions:**
+   - Repository access: select the `shift-right-agentic-development` repository
+   - Packages: Read and Write
+
+5. Click **Generate token** and copy the value immediately (it won't be shown again)
+
+6. Export it in your shell:
+
+```bash
+export GITHUB_TOKEN=ghp_your_token_here
+```
+
+> Store this token securely. Never commit it to the repository.
+
+### GHCR Image Pull Secret
+
+By default, images pushed to GitHub Container Registry are **private**. When OpenShift
+tries to pull a private image, pods will fail with `ImagePullBackOff` and an error like:
+
+```
+unable to retrieve auth token: invalid username/password: unauthorized
+```
+
+To fix this, create an image pull secret so OpenShift can authenticate with GHCR.
+
+#### Automated (Recommended)
+
+```bash
+export GITHUB_TOKEN=ghp_your_token_here
+./scripts/create-ghcr-pull-secret.sh
+```
+
+The script performs these steps:
+1. Creates a `docker-registry` secret called `ghcr-pull-secret` in the `agentic` namespace
+   using the provided `GITHUB_TOKEN`
+2. Links the secret to the `default` service account so all pods in the namespace
+   can use it for image pulling
+3. Restarts all application deployments so pods re-pull images with the new credentials
+
+#### Manual Steps
+
+If you prefer to run the commands yourself:
+
+```bash
+export GITHUB_TOKEN=ghp_your_token_here
+
+# 1. Create the image pull secret
+oc create secret docker-registry ghcr-pull-secret \
+  --docker-server=ghcr.io \
+  --docker-username=maarten-vandeperre \
+  --docker-password="${GITHUB_TOKEN}" \
+  -n agentic
+
+# 2. Link it to the default service account for pulling
+oc secrets link default ghcr-pull-secret --for=pull -n agentic
+
+# 3. Restart deployments to pick up the new secret
+oc rollout restart deploy/person-service deploy/address-service \
+  deploy/people-service deploy/frontend -n agentic
+```
+
+#### Verifying the Secret
+
+```bash
+# Check the secret exists
+oc get secret ghcr-pull-secret -n agentic
+
+# Check it's linked to the default service account
+oc get sa default -n agentic -o jsonpath='{.imagePullSecrets[*].name}'
+```
+
+#### Alternative: Make Packages Public
+
+If you prefer not to manage pull secrets, you can make the GHCR packages public instead:
+
+1. Go to https://github.com/users/maarten-vandeperre/packages
+2. Click each package → **Package settings** → **Danger Zone** → **Change visibility** → **Public**
+3. Repeat for all four packages:
+   `shift-right-person-service`, `shift-right-address-service`,
+   `shift-right-people-service`, `shift-right-frontend`
+
+Public packages can be pulled by anyone without authentication, so no pull secret is needed.
+
+---
+
 ## Architecture Notes
 
 ### Namespaced ArgoCD Managing openshift-operators
@@ -360,4 +553,5 @@ with the corresponding `subscription.yaml` in `gitops/operators/`. Ensure `insta
 ```bash
 oc kustomize gitops/operators/
 oc kustomize gitops/databases/
+oc kustomize gitops/apps/
 ```

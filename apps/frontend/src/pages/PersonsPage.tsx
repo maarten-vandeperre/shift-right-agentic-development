@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { API_URLS } from '../config';
 import { getAll, create, update, remove } from '../api';
 import DataTable, { type Column } from '../components/DataTable';
@@ -12,31 +12,18 @@ interface Person {
   addressRef: string;
 }
 
-const fields: FieldDef[] = [
-  { name: 'firstName', label: 'First Name', required: true },
-  { name: 'lastName', label: 'Last Name', required: true },
-  { name: 'email', label: 'Email', type: 'email', required: true },
-  { name: 'addressRef', label: 'Address Ref (UUID)', placeholder: 'optional' },
-];
-
-const columns: Column<Person>[] = [
-  { header: 'First Name', accessor: (r) => r.firstName },
-  { header: 'Last Name', accessor: (r) => r.lastName },
-  { header: 'Email', accessor: (r) => r.email },
-  {
-    header: 'Address Ref',
-    accessor: (r) => (
-      <span className="font-mono text-xs text-gray-500">
-        {r.addressRef || '—'}
-      </span>
-    ),
-  },
-];
+interface Address {
+  ref: string;
+  line1: string;
+  line2: string | null;
+  country: string;
+}
 
 const empty = { firstName: '', lastName: '', email: '', addressRef: '' };
 
 export default function PersonsPage() {
   const [rows, setRows] = useState<Person[]>([]);
+  const [addresses, setAddresses] = useState<Address[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Person | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -44,14 +31,68 @@ export default function PersonsPage() {
 
   const load = useCallback(() => {
     setLoading(true);
-    getAll<Person>(API_URLS.persons)
-      .then(setRows)
+    Promise.all([
+      getAll<Person>(API_URLS.persons),
+      getAll<Address>(API_URLS.addresses),
+    ])
+      .then(([people, addrs]) => {
+        setRows(people);
+        setAddresses(addrs);
+      })
       .finally(() => setLoading(false));
   }, []);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  const addressMap = useMemo(() => {
+    const m = new Map<string, Address>();
+    addresses.forEach((a) => m.set(a.ref, a));
+    return m;
+  }, [addresses]);
+
+  const addressOptions = useMemo(
+    () =>
+      addresses.map((a) => ({
+        value: a.ref,
+        label: `${a.line1}${a.line2 ? ', ' + a.line2 : ''} — ${a.country}`,
+      })),
+    [addresses],
+  );
+
+  const fields: FieldDef[] = useMemo(
+    () => [
+      { name: 'firstName', label: 'First Name', required: true },
+      { name: 'lastName', label: 'Last Name', required: true },
+      { name: 'email', label: 'Email', type: 'email', required: true },
+      {
+        name: 'addressRef',
+        label: 'Address',
+        placeholder: '— select an address —',
+        options: addressOptions,
+      },
+    ],
+    [addressOptions],
+  );
+
+  const columns: Column<Person>[] = [
+    { header: 'First Name', accessor: (r) => r.firstName },
+    { header: 'Last Name', accessor: (r) => r.lastName },
+    { header: 'Email', accessor: (r) => r.email },
+    {
+      header: 'Address',
+      accessor: (r) => {
+        const a = addressMap.get(r.addressRef);
+        if (!a) return <span className="text-gray-400">—</span>;
+        return (
+          <span className="text-sm">
+            {a.line1}, {a.country}
+          </span>
+        );
+      },
+    },
+  ];
 
   function openCreate() {
     setEditing(null);

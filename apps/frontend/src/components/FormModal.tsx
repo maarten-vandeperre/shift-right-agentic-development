@@ -1,11 +1,17 @@
 import { useEffect, useRef } from 'react';
 
+export interface SelectOption {
+  value: string;
+  label: string;
+}
+
 export interface FieldDef {
   name: string;
   label: string;
   type?: string;
   required?: boolean;
   placeholder?: string;
+  options?: SelectOption[];
 }
 
 interface Props {
@@ -57,14 +63,30 @@ export default function FormModal({
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 {f.label}
               </label>
-              <input
-                type={f.type ?? 'text'}
-                required={f.required}
-                placeholder={f.placeholder}
-                value={values[f.name] ?? ''}
-                onChange={(e) => onChange(f.name, e.target.value)}
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
-              />
+              {f.options ? (
+                <select
+                  required={f.required}
+                  value={values[f.name] ?? ''}
+                  onChange={(e) => onChange(f.name, e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+                >
+                  <option value="">{f.placeholder ?? '— select —'}</option>
+                  {f.options.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type={f.type ?? 'text'}
+                  required={f.required}
+                  placeholder={f.placeholder}
+                  value={values[f.name] ?? ''}
+                  onChange={(e) => onChange(f.name, e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition"
+                />
+              )}
             </div>
           ))}
           <div className="flex justify-end gap-3 pt-2">
