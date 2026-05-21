@@ -30,6 +30,8 @@ spec:
               value: https://people-service-agentic.apps.ocp.h7xz9.sandbox1562.opentlc.com/api/people
             - name: VITE_CDC_API
               value: https://cdc-service-agentic.apps.ocp.h7xz9.sandbox1562.opentlc.com/api/cdc/events
+            - name: VITE_CHAT_API
+              value: https://chat-service-agentic.apps.ocp.h7xz9.sandbox1562.opentlc.com/api/chat
           resources:
             requests:
               cpu: 50m

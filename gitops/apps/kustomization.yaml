@@ -5,4 +5,5 @@ resources:
   - address-service
   - people-service
   - cdc-service
+  - chat-service
   - frontend

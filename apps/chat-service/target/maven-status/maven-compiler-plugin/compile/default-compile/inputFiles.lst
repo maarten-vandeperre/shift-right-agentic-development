@@ -1,0 +1,8 @@
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/chat-service/src/main/java/com/redhat/agentic/chat/client/OpenAiClient.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/chat-service/src/main/java/com/redhat/agentic/chat/client/PeopleApiClient.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/chat-service/src/main/java/com/redhat/agentic/chat/mcp/McpTools.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/chat-service/src/main/java/com/redhat/agentic/chat/model/ChatRequest.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/chat-service/src/main/java/com/redhat/agentic/chat/model/ChatResponse.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/chat-service/src/main/java/com/redhat/agentic/chat/model/McpToolDefinition.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/chat-service/src/main/java/com/redhat/agentic/chat/model/ToolCall.java
+/Users/maartenvandeperre/workspace/redhat/shift-right-agentic-development/apps/chat-service/src/main/java/com/redhat/agentic/chat/resource/ChatResource.java

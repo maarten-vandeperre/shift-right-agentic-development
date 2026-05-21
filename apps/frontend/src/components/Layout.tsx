@@ -5,6 +5,9 @@ const links = [
   { to: '/addresses', label: 'Addresses' },
   { to: '/people', label: 'People' },
   { to: '/cdc', label: 'CDC Events' },
+  { to: '/chat', label: 'Chatter Time' },
+  { to: '/mcp', label: 'MCP' },
+  { to: '/openapi', label: 'OpenAPI' },
 ];
 
 export default function Layout() {

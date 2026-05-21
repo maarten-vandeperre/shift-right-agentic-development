@@ -4,7 +4,8 @@ window.__RUNTIME_CONFIG__ = {
   PERSON_API: "${VITE_PERSON_API:-http://localhost:8081/api/persons}",
   ADDRESS_API: "${VITE_ADDRESS_API:-http://localhost:8082/api/addresses}",
   PEOPLE_API: "${VITE_PEOPLE_API:-http://localhost:8083/api/people}",
-  CDC_API: "${VITE_CDC_API:-http://localhost:8084/api/cdc/events}"
+  CDC_API: "${VITE_CDC_API:-http://localhost:8084/api/cdc/events}",
+  CHAT_API: "${VITE_CHAT_API:-http://localhost:8085/api/chat}"
 };
 EOF
 cp /tmp/config.js /opt/app-root/src/config.js 2>/dev/null || true

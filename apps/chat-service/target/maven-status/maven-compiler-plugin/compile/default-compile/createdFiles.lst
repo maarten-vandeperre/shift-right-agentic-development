@@ -1,0 +1,12 @@
+com/redhat/agentic/chat/client/OpenAiClient$ChatResult.class
+com/redhat/agentic/chat/mcp/McpTools.class
+com/redhat/agentic/chat/client/PeopleApiClient$PersonDto.class
+com/redhat/agentic/chat/model/McpToolDefinition.class
+com/redhat/agentic/chat/model/ToolCall.class
+com/redhat/agentic/chat/client/OpenAiClient$ToolCallInfo.class
+com/redhat/agentic/chat/client/PeopleApiClient.class
+com/redhat/agentic/chat/client/OpenAiClient.class
+com/redhat/agentic/chat/model/ChatRequest.class
+com/redhat/agentic/chat/model/ChatResponse.class
+com/redhat/agentic/chat/resource/ChatResource.class
+com/redhat/agentic/chat/client/PeopleApiClient$AddressDto.class

@@ -4,6 +4,9 @@ import PersonsPage from './pages/PersonsPage';
 import AddressesPage from './pages/AddressesPage';
 import PeoplePage from './pages/PeoplePage';
 import CdcPage from './pages/CdcPage';
+import ChatterPage from './pages/ChatterPage';
+import McpPage from './pages/McpPage';
+import OpenApiPage from './pages/OpenApiPage';
 
 export default function App() {
   return (
@@ -15,6 +18,9 @@ export default function App() {
           <Route path="addresses" element={<AddressesPage />} />
           <Route path="people" element={<PeoplePage />} />
           <Route path="cdc" element={<CdcPage />} />
+          <Route path="chat" element={<ChatterPage />} />
+          <Route path="mcp" element={<McpPage />} />
+          <Route path="openapi" element={<OpenApiPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
