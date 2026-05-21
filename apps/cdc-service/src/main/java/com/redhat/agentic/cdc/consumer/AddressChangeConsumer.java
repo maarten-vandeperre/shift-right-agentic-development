@@ -45,7 +45,8 @@ public class AddressChangeConsumer {
     @Incoming("address-changes")
     public void consume(String message) {
         try {
-            JsonNode envelope = objectMapper.readTree(message);
+            JsonNode root = objectMapper.readTree(message);
+            JsonNode envelope = root.has("payload") ? root.path("payload") : root;
             String op = envelope.path("op").asText();
             JsonNode after = envelope.path("after");
             JsonNode before = envelope.path("before");

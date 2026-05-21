@@ -38,7 +38,8 @@ public class PersonChangeConsumer {
     @Incoming("person-changes")
     public void consume(String message) {
         try {
-            JsonNode envelope = objectMapper.readTree(message);
+            JsonNode root = objectMapper.readTree(message);
+            JsonNode envelope = root.has("payload") ? root.path("payload") : root;
             String op = envelope.path("op").asText();
             JsonNode after = envelope.path("after");
             JsonNode before = envelope.path("before");
@@ -48,6 +49,12 @@ public class PersonChangeConsumer {
             String payload;
 
             switch (op) {
+                case "r":
+                    operation = "SNAPSHOT";
+                    ref = after.path("ref").asText();
+                    payload = after.toString();
+                    syncPersonToPeople(after);
+                    break;
                 case "c":
                     operation = "CREATE";
                     ref = after.path("ref").asText();
