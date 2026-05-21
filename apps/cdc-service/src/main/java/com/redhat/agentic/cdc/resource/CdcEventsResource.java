@@ -10,16 +10,26 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import org.jboss.resteasy.reactive.RestStreamElementType;
 
-@Path("/api/cdc/events")
+import java.util.List;
+
+@Path("/api/cdc")
 public class CdcEventsResource {
 
     @Inject
     CdcEventBroadcaster broadcaster;
 
     @GET
+    @Path("/events")
     @Produces(MediaType.SERVER_SENT_EVENTS)
     @RestStreamElementType(MediaType.APPLICATION_JSON)
     public Multi<CdcEvent> stream() {
         return broadcaster.stream();
+    }
+
+    @GET
+    @Path("/history")
+    @Produces(MediaType.APPLICATION_JSON)
+    public List<CdcEvent> history() {
+        return broadcaster.getHistory();
     }
 }

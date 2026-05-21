@@ -22,6 +22,12 @@ export default function CdcPage() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const historyUrl = API_URLS.cdcEvents.replace(/\/events$/, '/history');
+    fetch(historyUrl)
+      .then((r) => r.json())
+      .then((data: CdcEvent[]) => setEvents(data))
+      .catch(() => {});
+
     const eventSource = new EventSource(API_URLS.cdcEvents);
 
     eventSource.onopen = () => {
@@ -32,7 +38,7 @@ export default function CdcPage() {
     eventSource.onmessage = (e) => {
       try {
         const event: CdcEvent = JSON.parse(e.data);
-        setEvents((prev) => [...prev.slice(-199), event]);
+        setEvents((prev) => [...prev.slice(-499), event]);
       } catch {
         // skip malformed events
       }
