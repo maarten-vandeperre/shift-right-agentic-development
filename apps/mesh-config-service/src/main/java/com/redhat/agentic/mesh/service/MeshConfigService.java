@@ -71,7 +71,7 @@ public class MeshConfigService {
                         .addToLabels(MANAGED_BY_LABEL, MANAGED_BY_VALUE)
                     .endMetadata()
                     .build();
-            vs.setAdditionalProperties(Map.of("spec", spec));
+            vs.setAdditionalProperty("spec", spec);
 
             client.genericKubernetesResources(VIRTUAL_SERVICE_CTX)
                     .inNamespace(namespace)
@@ -182,29 +182,30 @@ public class MeshConfigService {
     }
 
     private Map<String, Object> buildVirtualServiceSpec(FaultConfig config) {
-        Map<String, Object> fault = new HashMap<>();
+        Map<String, Object> faultInner = new HashMap<>();
 
         if ("delay".equalsIgnoreCase(config.getFaultType())) {
-            fault.put("delay", Map.of(
-                    "percentage", Map.of("value", config.getPercentage()),
+            faultInner.put("delay", Map.of(
+                    "percentage", Map.of("value", (double) config.getPercentage()),
                     "fixedDelay", config.getDelayMs() + "ms"
             ));
         } else if ("abort".equalsIgnoreCase(config.getFaultType())) {
-            fault.put("abort", Map.of(
-                    "percentage", Map.of("value", config.getPercentage()),
+            faultInner.put("abort", Map.of(
+                    "percentage", Map.of("value", (double) config.getPercentage()),
                     "httpStatus", config.getAbortCode()
             ));
         }
 
-        Map<String, Object> httpRoute = new HashMap<>(fault);
+        Map<String, Object> httpRoute = new HashMap<>();
+        httpRoute.put("fault", faultInner);
         httpRoute.put("route", List.of(
                 Map.of("destination", Map.of("host", config.getServiceName()))
         ));
 
-        return Map.of(
-                "hosts", List.of(config.getServiceName()),
-                "http", List.of(httpRoute)
-        );
+        Map<String, Object> spec = new HashMap<>();
+        spec.put("hosts", List.of(config.getServiceName()));
+        spec.put("http", List.of(httpRoute));
+        return spec;
     }
 
     private Map<String, Object> buildAuthorizationPolicySpec(TrafficBlockConfig config) {
