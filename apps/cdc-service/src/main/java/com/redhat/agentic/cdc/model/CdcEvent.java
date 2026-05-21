@@ -7,16 +7,18 @@ public class CdcEvent {
     private String operation;
     private String ref;
     private String payload;
+    private String before;
 
     public CdcEvent() {
     }
 
-    public CdcEvent(String timestamp, String table, String operation, String ref, String payload) {
+    public CdcEvent(String timestamp, String table, String operation, String ref, String payload, String before) {
         this.timestamp = timestamp;
         this.table = table;
         this.operation = operation;
         this.ref = ref;
         this.payload = payload;
+        this.before = before;
     }
 
     public String getTimestamp() {
@@ -57,5 +59,13 @@ public class CdcEvent {
 
     public void setPayload(String payload) {
         this.payload = payload;
+    }
+
+    public String getBefore() {
+        return before;
+    }
+
+    public void setBefore(String before) {
+        this.before = before;
     }
 }

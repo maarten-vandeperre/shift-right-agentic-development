@@ -54,6 +54,7 @@ public class AddressChangeConsumer {
             String operation;
             String ref;
             String payload;
+            String beforePayload = null;
 
             switch (op) {
                 case "c":
@@ -65,6 +66,7 @@ public class AddressChangeConsumer {
                     operation = "UPDATE";
                     ref = after.path("ref").asText();
                     payload = after.toString();
+                    beforePayload = before.isMissingNode() || before.isNull() ? null : before.toString();
                     rebuildPeopleForAddress(ref);
                     break;
                 case "d":
@@ -83,7 +85,8 @@ public class AddressChangeConsumer {
                     "address",
                     operation,
                     ref,
-                    payload
+                    payload,
+                    beforePayload
             );
             broadcaster.broadcast(event);
             LOG.infov("Processed address CDC event: {0} {1}", operation, ref);

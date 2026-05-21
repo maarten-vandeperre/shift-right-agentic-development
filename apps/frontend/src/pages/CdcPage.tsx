@@ -7,6 +7,7 @@ interface CdcEvent {
   operation: string;
   ref: string;
   payload: string;
+  before: string | null;
 }
 
 const OP_COLORS: Record<string, string> = {
@@ -128,9 +129,26 @@ export default function CdcPage() {
                   {ev.timestamp}
                 </span>
               </div>
-              <pre className="rounded-md bg-gray-50 p-3 text-xs text-gray-700 overflow-x-auto max-h-40">
-                {formatPayload(ev.payload)}
-              </pre>
+              {ev.operation === 'UPDATE' && ev.before ? (
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="mb-1 block text-xs font-medium text-red-500">Before</span>
+                    <pre className="rounded-md bg-red-50 p-3 text-xs text-gray-700 overflow-x-auto max-h-40">
+                      {formatPayload(ev.before)}
+                    </pre>
+                  </div>
+                  <div>
+                    <span className="mb-1 block text-xs font-medium text-green-600">After</span>
+                    <pre className="rounded-md bg-green-50 p-3 text-xs text-gray-700 overflow-x-auto max-h-40">
+                      {formatPayload(ev.payload)}
+                    </pre>
+                  </div>
+                </div>
+              ) : (
+                <pre className="rounded-md bg-gray-50 p-3 text-xs text-gray-700 overflow-x-auto max-h-40">
+                  {formatPayload(ev.payload)}
+                </pre>
+              )}
             </div>
           ))}
           <div ref={bottomRef} />

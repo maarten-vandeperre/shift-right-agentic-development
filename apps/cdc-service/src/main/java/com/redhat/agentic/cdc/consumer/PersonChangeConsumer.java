@@ -47,6 +47,7 @@ public class PersonChangeConsumer {
             String operation;
             String ref;
             String payload;
+            String beforePayload = null;
 
             switch (op) {
                 case "r":
@@ -65,6 +66,7 @@ public class PersonChangeConsumer {
                     operation = "UPDATE";
                     ref = after.path("ref").asText();
                     payload = after.toString();
+                    beforePayload = before.isMissingNode() || before.isNull() ? null : before.toString();
                     syncPersonToPeople(after);
                     break;
                 case "d":
@@ -83,7 +85,8 @@ public class PersonChangeConsumer {
                     "person",
                     operation,
                     ref,
-                    payload
+                    payload,
+                    beforePayload
             );
             broadcaster.broadcast(event);
             LOG.infov("Processed person CDC event: {0} {1}", operation, ref);
